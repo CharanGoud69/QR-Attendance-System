@@ -1,0 +1,8 @@
+'use strict';
+for (const form of document.querySelectorAll('form[data-confirm]')) form.addEventListener('submit',e=>{if(!confirm(form.dataset.confirm))e.preventDefault()});
+for (const clock of document.querySelectorAll('[data-expires]')) {
+ const offset=Number(clock.dataset.server)*1000-Date.now();
+ const update=()=>{const left=Math.max(0,Math.ceil((Number(clock.dataset.expires)*1000-Date.now()-offset)/1000));const revoked=clock.dataset.revoked==='1';clock.textContent=revoked?'QR cancelled':left?`${Math.floor(left/60)}:${String(left%60).padStart(2,'0')} remaining`:'QR expired';if(!left||revoked)document.querySelectorAll('[data-expiry-button]').forEach(b=>b.disabled=true)};update();setInterval(update,1000);
+}
+for(const button of document.querySelectorAll('[data-copy]'))button.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(button.dataset.copy);button.textContent='Link copied'}catch{window.prompt('Copy this check-in link:',button.dataset.copy)}});
+for(const button of document.querySelectorAll('[data-share-image]'))button.addEventListener('click',async()=>{const message=document.getElementById('share-message');try{const r=await fetch(button.dataset.shareImage);if(!r.ok)throw Error();const file=new File([await r.blob()],`ClassLedger-${button.dataset.kind}.png`,{type:'image/png'});if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:`${button.dataset.kind} attendance QR`})}else{message.textContent='Use Download QR image, then attach it in WhatsApp or your messaging app.'}}catch(e){if(e.name!=='AbortError')message.textContent='Sharing is unavailable. Download the QR image instead.'}});
